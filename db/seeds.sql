@@ -1,42 +1,4 @@
--- Engineering --
-    -- Manufacturing Engineer --
-        -- Juliet Sparks --
-    -- Industrial Engineer --
-        -- 	Hans-Augusto Rey --
-    -- Controls Engineer --
-        -- Enzo Blevins --
-    -- Engineering Manager --
-        -- Brandon Sanderson --
--- Finance --
-    -- Chief Financial Officer --
-        -- Claire Case --
-    -- Comptroller -- 
-        -- Elsa Knight --
-    -- Accountant --
-        -- Amorina Brucca --
--- Human Resources --
-    -- Director --
-        -- Margret Rey --
-    -- Specialist --
-        -- Anita Brewer --
--- Quality -- 
-    -- Quality Technician --
-        -- Tamsyn Muir --
-    -- Quality System Engineer --
-        -- Zoe Rorvig --
-    -- Quality Assurance Engineer --
-        -- Scott Westerfeld --
-    -- Quality Manager --
-        -- Jim Toeger --
--- Supply Chain Management --
-    -- Shipping Manager --
-        -- Kimberly Jones --
-    -- Receiving Manager --
-        -- Kelvin Slater --
-    -- Shipping Associate --
-        -- Samantha Shannon --
-    -- Receiving Associate --
-        -- Marco Allison --
+USE employee_db;
 
 INSERT INTO department (name)
     VALUES
