@@ -37,18 +37,34 @@ const chooseOption = (type) => {
             break;
         }
 
-        // case 'Add Role': {
-        //     prompt({
-        //         type: 'input',
-        //         message: 'What is the title of the role?',
-        //         name: 'roleTitle',
-        //     })
-        //         .then((response) => {
-        //             db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.roleTitle}','${}','${}')`);
-        //             init();
-        //         });
-        //     break;
-        // }
+        case 'Add Role': {
+            const dept = [];
+            db.query(`SELECT * FROM department`, (err, departments) => {
+                for (let i = 0; i < departments.length; i++) {
+                    dept.push(departments[i].name);
+                }
+            });
+
+            prompt([{
+                type: 'input',
+                message: 'What is the title of the role?',
+                name: 'title',
+            }, {
+                type: 'input',
+                message: 'What is the salary of the role?',
+                name: 'salary',
+            }, {
+                type: 'rawlist',
+                message: 'What department is this role in?',
+                choices: dept,
+                name: 'dept',
+            }])
+                .then((response) => {
+                    db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.title}', '${response.salary}', (SELECT id FROM department WHERE name = '${response.dept}'))`);
+                    init();
+                });
+            break;
+        }
 
         case 'View All Departments': {
             db.query('SELECT * FROM department', (err, departments) => {
