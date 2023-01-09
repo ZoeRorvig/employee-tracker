@@ -10,32 +10,47 @@ const db = mysql.createConnection({
 
 const chooseOption = (type) => {
     switch (type) {
-        case 'VIEW ALL DEPARTMENTS': {
+
+        case 'View All Employees': {
+            db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager
+            FROM employee 
+            JOIN role ON employee.role_id = role.id 
+            JOIN department ON role.department_id = department.id 
+            LEFT JOIN employee manager ON employee.manager_id = manager.id`, (err, employees) => {
+                console.table(employees);
+                init();
+            });
+            break;
+        }
+
+        case 'View All Departments': {
             db.query('SELECT * FROM department', (err, departments) => {
                 console.table(departments);
                 init();
             });
             break;
         }
-        case 'VIEW ALL ROLES': {
+
+        case 'View All Roles': {
             db.query(`SELECT role.id, role.title, department.name AS department, role.salary 
             FROM role 
             JOIN department ON role.department_id = department.id`, (err, roles) => {
                 console.table(roles);
                 init();
             });
-
-            // db.query('SELECT * FROM role', (err, roles) => {
-            //     console.table(roles);
-            //     init();
-            // });
             break;
         }
-        case 'VIEW ALL EMPLOYEES': {
-            db.query('SELECT * FROM employee', (err, employees) => {
-                console.table(employees);
-                init();
-            });
+
+        case 'Add Department': {
+            prompt({
+                type: 'input',
+                message: 'What is the name of the department?',
+                name: 'departmentName',
+            })
+                .then((response) => {
+                    db.query(`INSERT INTO department (name) VALUES ('${response.departmentName}')`);
+                    init();
+                });
             break;
         }
     }
@@ -46,9 +61,13 @@ const init = () => {
         type: 'rawlist',
         message: 'Choose one of the following:',
         choices: [
-            'VIEW ALL EMPLOYEES',
-            'VIEW ALL DEPARTMENTS',
-            'VIEW ALL ROLES',
+            'View All Employees',
+            'Add Employee',
+            'Update Employee Role',
+            'View All Departments',
+            'Add Role',
+            'View All Roles',
+            'Add Department',
         ],
         name: 'choices',
     })
