@@ -23,19 +23,36 @@ const chooseOption = (type) => {
             break;
         }
 
-        case 'View All Departments': {
-            db.query('SELECT * FROM department', (err, departments) => {
-                console.table(departments);
-                init();
-            });
-            break;
-        }
+        // case 'Add Employee':{}
+
+        // case 'Update Employee Role':{}
 
         case 'View All Roles': {
             db.query(`SELECT role.id, role.title, department.name AS department, role.salary 
             FROM role 
             JOIN department ON role.department_id = department.id`, (err, roles) => {
                 console.table(roles);
+                init();
+            });
+            break;
+        }
+
+        // case 'Add Role': {
+        //     prompt({
+        //         type: 'input',
+        //         message: 'What is the title of the role?',
+        //         name: 'roleTitle',
+        //     })
+        //         .then((response) => {
+        //             db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.roleTitle}','${}','${}')`);
+        //             init();
+        //         });
+        //     break;
+        // }
+
+        case 'View All Departments': {
+            db.query('SELECT * FROM department', (err, departments) => {
+                console.table(departments);
                 init();
             });
             break;
@@ -64,9 +81,9 @@ const init = () => {
             'View All Employees',
             'Add Employee',
             'Update Employee Role',
-            'View All Departments',
-            'Add Role',
             'View All Roles',
+            'Add Role',
+            'View All Departments',
             'Add Department',
         ],
         name: 'choices',
