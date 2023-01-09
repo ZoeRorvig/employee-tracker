@@ -86,6 +86,11 @@ const chooseOption = (type) => {
                 });
             break;
         }
+
+        case 'Quit':{
+            db.end();
+            break;
+        }
     }
 }
 
@@ -101,6 +106,7 @@ const init = () => {
             'Add Role',
             'View All Departments',
             'Add Department',
+            'Quit',
         ],
         name: 'choices',
     })
