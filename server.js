@@ -23,9 +23,71 @@ const chooseOption = (type) => {
             break;
         }
 
-        // case 'Add Employee':{}
+        // case 'View Employees By Manager': {} BONUS
+
+        // case 'View Employees By Department': {} BONUS
+
+        case 'Add Employee': {
+            const role = [];
+            const manager = [];
+            db.query(`SELECT * FROM role`, (err, roles) => {
+                for (let i = 0; i < roles.length; i++) {
+                    role.push(roles[i].title);
+                }
+            });
+
+            db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee WHERE manager_id IS NULL`, (err, managers) => {
+                for (let i = 0; i < managers.length; i++) {
+                    manager.push(managers[i].name);
+                }
+            });
+
+            prompt([{
+                type: 'input',
+                message: 'What is the first name of the employee?',
+                name: 'first_name',
+            }, {
+                type: 'input',
+                message: 'What is the last name of the employee?',
+                name: 'last_name',
+            }, {
+                type: 'rawlist',
+                message: 'What is the role of the employee?',
+                choices: role,
+                name: 'role',
+            }, {
+                type: 'rawlist',
+                message: 'Who is the manager of the employee?',
+                choices: manager,
+                name: 'manager',
+            }])
+                .then((response) => {
+                    const managerName = response.manager.split(" ");
+
+                    db.query(`SELECT id FROM role WHERE title = '${response.role}'`, (err, roleID) => {
+                        db.query(`SELECT id FROM employee WHERE first_name = '${managerName[0]}' AND last_name = '${managerName[1]}'`, (err, managerID) => {
+                            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${response.first_name}', '${response.last_name}', '${roleID[0].id}', '${managerID[0].id}')`, (err) => {
+                                if (!err) {
+                                    init();
+                                }
+                            })
+                        })
+                    })
+                });
+
+            // db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${response.first_name}', '${response.last_name}', (SELECT id FROM role WHERE title = '${response.role}'), (SELECT id FROM employee WHERE first_name = '${managerName[0]}' AND last_name = '${managerName[1]}'))`, (err) => {
+            //     if (!err) {
+            //         init();
+            //     }
+            // });
+            break;
+        }
 
         // case 'Update Employee Role':{}
+
+        // case 'Update Employee Managers': {} BONUS
+
+        // case 'Delete Employee': {} BONUS
 
         case 'View All Roles': {
             db.query(`SELECT role.id, role.title, department.name AS department, role.salary 
@@ -60,11 +122,21 @@ const chooseOption = (type) => {
                 name: 'dept',
             }])
                 .then((response) => {
-                    db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.title}', '${response.salary}', (SELECT id FROM department WHERE name = '${response.dept}'))`);
-                    init();
+                    db.query(`SELECT id FROM department WHERE name = '${response.dept}'`, (err, deptID) => {
+                        db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.title}', '${response.salary}', ${deptID[0].id})`, (err) => {
+                            if (!err) {
+                                init();
+                            }
+                        })
+                    });
+
+                    //     db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.title}', '${response.salary}', (SELECT id FROM department WHERE name = '${response.dept}'))`);
+                    //     init();
                 });
             break;
         }
+
+        // case 'Delete Role': {} BONUS
 
         case 'View All Departments': {
             db.query('SELECT * FROM department', (err, departments) => {
@@ -87,7 +159,11 @@ const chooseOption = (type) => {
             break;
         }
 
-        case 'Quit':{
+        // case 'Delete Department': {} BONUS
+
+        // case 'View Total Utilized Budget By Department': {} BONUS
+
+        case 'Quit': {
             db.end();
             break;
         }
@@ -100,12 +176,19 @@ const init = () => {
         message: 'Choose one of the following:',
         choices: [
             'View All Employees',
+            //'View Employees By Manager', BONUS
+            //'View Employees By Department', BONUS
             'Add Employee',
-            'Update Employee Role',
+            //'Update Employee Role',
+            //'Update Employee Managers', BONUS
+            //'Delete Employee', BONUS
             'View All Roles',
             'Add Role',
+            //'Delete Role', BONUS
             'View All Departments',
             'Add Department',
+            //'Delete Department', BONUS
+            //'View Total Utilized Budget By Department', BONUS
             'Quit',
         ],
         name: 'choices',

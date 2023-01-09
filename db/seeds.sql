@@ -24,7 +24,7 @@ INSERT INTO role (title, salary, department_id)
     ('Quality Assurance Engineer', 100000, 4),
     ('Quality Manager', 100000, 4),
     ('Shipping Manager', 100000, 5),
-    ('SReceiving Manager', 100000, 5),
+    ('Receiving Manager', 100000, 5),
     ('Shipping Associate', 100000, 5),
     ('Receiving Associate', 100000, 5);
 
