@@ -8,6 +8,8 @@ const db = mysql.createConnection({
     database: 'employee_db',
 });
 
+
+
 const chooseOption = (type) => {
     switch (type) {
 
@@ -64,9 +66,10 @@ const chooseOption = (type) => {
                 .then((response) => {
                     const managerName = response.manager.split(" ");
 
-                    db.query(`SELECT id FROM role WHERE title = '${response.role}'`, (err, roleID) => {
-                        db.query(`SELECT id FROM employee WHERE first_name = '${managerName[0]}' AND last_name = '${managerName[1]}'`, (err, managerID) => {
-                            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${response.first_name}', '${response.last_name}', '${roleID[0].id}', '${managerID[0].id}')`, (err) => {
+                    db.query('SELECT id FROM role WHERE ?', { title: response.role}, (err, roleID) => {
+                        db.query('SELECT id FROM employee WHERE ? AND ?', 
+                        [{ first_name: managerName[0]}, {last_name: managerName[1]}], (err, managerID) => {
+                            db.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [response.first_name, response.last_name, roleID[0].id, managerID[0].id], (err) => {
                                 if (!err) {
                                     init();
                                 }
@@ -74,16 +77,54 @@ const chooseOption = (type) => {
                         })
                     })
                 });
-
-            // db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${response.first_name}', '${response.last_name}', (SELECT id FROM role WHERE title = '${response.role}'), (SELECT id FROM employee WHERE first_name = '${managerName[0]}' AND last_name = '${managerName[1]}'))`, (err) => {
-            //     if (!err) {
-            //         init();
-            //     }
-            // });
             break;
         }
 
-        // case 'Update Employee Role':{}
+        // TODO: 
+        case 'Update Employee Role': {
+            const role = [];
+            const employee = [];
+
+            db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee`, (err, employees) => {
+                for (let i = 0; i < employees.length; i++) {
+                    employee.push(employees[i].name);
+                }
+                console.log(employee);
+            });
+
+            db.query(`SELECT * FROM role`, (err, roles) => {
+                for (let i = 0; i < roles.length; i++) {
+                    role.push(roles[i].title);
+                }
+            });
+
+            prompt([{
+                type: 'rawlist',
+                message: 'Which employee would you like to update?',
+                choices: employee,
+                name: 'employee',
+            }, {
+                type: 'rawlist',
+                message: 'What is the updated role?',
+                choices: role,
+                name: 'role',
+            }])
+                .then((response) => {
+                    console.log('yes');
+                    const employeeName = response.employee.split(" ");
+
+                    db.query(`SELECT id FROM role WHERE title = '${response.role}'`, (err, roleID) => {
+                        db.query(`SELECT id FROM employee WHERE first_name = '${employeeName[0]}' AND last_name = '${employeeName[1]}'`, (err, employeeID) => {
+                            db.query(`UPDATE employee SET title = '${roleID[0].id}' WHERE id = '${employeeID[0].id}'`, (err) => {
+                                if (!err) {
+                                    init();
+                                }
+                            })
+                        })
+                    })
+                });
+            break;
+        }
 
         // case 'Update Employee Managers': {} BONUS
 
@@ -129,9 +170,6 @@ const chooseOption = (type) => {
                             }
                         })
                     });
-
-                    //     db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.title}', '${response.salary}', (SELECT id FROM department WHERE name = '${response.dept}'))`);
-                    //     init();
                 });
             break;
         }
@@ -179,7 +217,7 @@ const init = () => {
             //'View Employees By Manager', BONUS
             //'View Employees By Department', BONUS
             'Add Employee',
-            //'Update Employee Role',
+            'Update Employee Role',
             //'Update Employee Managers', BONUS
             //'Delete Employee', BONUS
             'View All Roles',
