@@ -12,7 +12,7 @@ const chooseOption = (type) => {
     switch (type) {
 
         case 'View All Employees': {
-            
+
             db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id', (err, employees) => {
                 console.table(employees);
                 init();
@@ -37,16 +37,16 @@ const chooseOption = (type) => {
                     name: 'departmentName',
                 })
                     .then((response) => {
-                        db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE department.name = ?',  response.departmentName, (err, employees) => {
-                            if (!err) { 
+                        db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE department.name = ?', response.departmentName, (err, employees) => {
+                            if (!err) {
                                 console.table(employees);
-                                init(); 
+                                init();
                             };
                         })
                     });
             });
             break;
-        } 
+        }
 
         case 'Add Employee': {
             const role = [];
@@ -207,8 +207,8 @@ const chooseOption = (type) => {
                 })
                     .then((response) => {
                         db.query('DELETE FROM role WHERE ?', { title: response.roleTitle }, (err) => {
-                            if (!err) { 
-                                init(); 
+                            if (!err) {
+                                init();
                             };
                         })
                     });
@@ -253,8 +253,8 @@ const chooseOption = (type) => {
                 })
                     .then((response) => {
                         db.query('DELETE FROM department WHERE ?', { name: response.departmentName }, (err) => {
-                            if (!err) { 
-                                init(); 
+                            if (!err) {
+                                init();
                             };
                         })
                     });
@@ -262,7 +262,31 @@ const chooseOption = (type) => {
             break;
         }
 
-        // case 'View Total Utilized Budget By Department': {} BONUS
+        case 'View Total Utilized Budget By Department': {
+            db.query(`SELECT * FROM department`, (err, departments) => {
+                prompt({
+                    type: 'rawlist',
+                    message: 'Select the department to view the Total Utilized Budget:',
+                    choices: function () {
+                        const dept = [];
+                        for (let i = 0; i < departments.length; i++) {
+                            dept.push(departments[i].name);
+                        }
+                        return dept;
+                    },
+                    name: 'departmentName',
+                })
+                    .then((response) => {
+                        db.query('SELECT department.name AS department, SUM(role.salary) AS total FROM role LEFT JOIN department ON role.department_id = department.id WHERE department.name = ?', response.departmentName, (err, roles) => {
+                            if (!err) {
+                                console.table(roles);
+                                init();
+                            };
+                        })
+                    });
+            });
+            break;
+        }
 
         case 'Quit': {
             db.end();
@@ -278,7 +302,7 @@ const init = () => {
         choices: [
             'View All Employees',
             //'View Employees By Manager', BONUS
-            'View Employees By Department', 
+            'View Employees By Department',
             'Add Employee',
             'Update Employee Role',
             //'Update Employee Managers', BONUS
@@ -289,7 +313,7 @@ const init = () => {
             'View All Departments',
             'Add Department',
             'Delete Department',
-            //'View Total Utilized Budget By Department', BONUS
+            'View Total Utilized Budget By Department',
             'Quit',
         ],
         name: 'choices',
