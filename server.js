@@ -9,6 +9,16 @@ const db = mysql.createConnection({
     database: 'employee_db',
 });
 
+connectionScreen = () => {
+    console.log(`
+ ________________________________
+|                                |
+|       EMPLOYEE MANAGER!        |
+|________________________________|
+    
+    `)
+}
+
 const chooseOption = (type) => {
     switch (type) {
 
@@ -30,8 +40,8 @@ const chooseOption = (type) => {
                         const manager = [];
                         for (let i = 0; i < managers.length; i++) {
                             manager.push(managers[i].name);
-                            return manager;
                         }
+                        return manager;
                     },
                     name: 'manager',
                 })
@@ -421,4 +431,5 @@ const init = () => {
         });
 };
 
+connectionScreen();
 init(); 
