@@ -167,7 +167,50 @@ const chooseOption = (type) => {
             break;
         }
 
-        // case 'Update Employee Managers': {} BONUS
+        case 'Update Employee Managers': {
+            db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee`, (err, employees) => {
+                db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee WHERE manager_id IS NULL`, (err, managers) => {
+                    prompt([{
+                        type: 'rawlist',
+                        message: 'Which employee would you like to update?',
+                        choices: function () {
+                            const employee = [];
+                            for (let i = 0; i < employees.length; i++) {
+                                employee.push(employees[i].name);
+                            }
+                            return employee;
+                        },
+                        name: 'employee',
+                    }, {
+                        type: 'rawlist',
+                        message: 'Which manager would you like to update to?',
+                        choices: function () {
+                            const manager = [];
+                            for (let i = 0; i < managers.length; i++) {
+                                manager.push(managers[i].name);
+                            }
+                            return manager;
+                        },
+                        name: 'manager',
+                    }])
+                        .then((response) => {
+                            const employeeName = response.employee.split(" ");
+                            const managerName = response.manager.split(" ");
+
+                            db.query('SELECT id FROM employee WHERE ?', [{ first_name: managerName[0] }, { last_name: managerName[1] }], (err, managerID) => {
+                                db.query('SELECT id FROM employee WHERE ? AND ?', [{ first_name: employeeName[0] }, { last_name: employeeName[1] }], (err, employeeID) => {
+                                    db.query('UPDATE employee SET ? WHERE ?', [{ manager_id: managerID[0].id }, { id: employeeID[0].id }], (err) => {
+                                        if (!err) {
+                                            init();
+                                        }
+                                    })
+                                })
+                            })
+                        });
+                });
+            });
+            break;
+        }
 
         case 'Delete Employee': {
             db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee`, (err, employees) => {
@@ -358,7 +401,7 @@ const init = () => {
             'View Employees By Department',
             'Add Employee',
             'Update Employee Role',
-            //'Update Employee Managers', BONUS
+            'Update Employee Managers',
             'Delete Employee',
             'View All Roles',
             'Add Role',
