@@ -20,7 +20,31 @@ const chooseOption = (type) => {
             break;
         }
 
-        // case 'View Employees By Manager': {} BONUS
+        case 'View Employees By Manager': {
+            db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee WHERE manager_id IS NULL`, (err, managers) => {
+                prompt({
+                    type: 'rawlist',
+                    message: 'Who is the manager of the employee?',
+                    choices: function () {
+                        const manager = [];
+                        for (let i = 0; i < managers.length; i++) {
+                            manager.push(managers[i].name);
+                            return manager;
+                        }
+                    },
+                    name: 'manager',
+                })
+                    .then((response) => {
+                        db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE concat(manager.first_name," ", manager.last_name) = ?', response.manager, (err, employees) => {
+                            if (!err) {
+                                console.table(employees);
+                                init();
+                            }
+                        })
+                    });
+            })
+            break;
+        }
 
         case 'View Employees By Department': {
             db.query(`SELECT * FROM department`, (err, departments) => {
@@ -145,7 +169,36 @@ const chooseOption = (type) => {
 
         // case 'Update Employee Managers': {} BONUS
 
-        // case 'Delete Employee': {} BONUS
+        case 'Delete Employee': {
+            db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee`, (err, employees) => {
+                db.query(`SELECT * FROM role`, (err, roles) => {
+                    prompt({
+                        type: 'rawlist',
+                        message: 'Which employee would you like to delete?',
+                        choices: function () {
+                            const employee = [];
+                            for (let i = 0; i < employees.length; i++) {
+                                employee.push(employees[i].name);
+                            }
+                            return employee;
+                        },
+                        name: 'employee',
+                    })
+                        .then((response) => {
+                            const employeeName = response.employee.split(" ");
+
+                            db.query('SELECT id FROM employee WHERE ? AND ?', [{ first_name: employeeName[0] }, { last_name: employeeName[1] }], (err, employeeID) => {
+                                db.query('DELETE FROM employee WHERE ?', { id: employeeID[0].id }, (err) => {
+                                    if (!err) {
+                                        init();
+                                    }
+                                })
+                            })
+                        });
+                });
+            });
+            break;
+        }
 
         case 'View All Roles': {
             db.query(`SELECT role.id, role.title, department.name AS department, role.salary 
@@ -301,12 +354,12 @@ const init = () => {
         message: 'Choose one of the following:',
         choices: [
             'View All Employees',
-            //'View Employees By Manager', BONUS
+            'View Employees By Manager',
             'View Employees By Department',
             'Add Employee',
             'Update Employee Role',
             //'Update Employee Managers', BONUS
-            //'Delete Employee', BONUS
+            'Delete Employee',
             'View All Roles',
             'Add Role',
             'Delete Role',
