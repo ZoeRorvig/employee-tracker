@@ -12,11 +12,8 @@ const chooseOption = (type) => {
     switch (type) {
 
         case 'View All Employees': {
-            db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager
-            FROM employee 
-            LEFT JOIN role ON employee.role_id = role.id 
-            LEFT JOIN department ON role.department_id = department.id 
-            LEFT JOIN employee manager ON employee.manager_id = manager.id`, (err, employees) => {
+            
+            db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id', (err, employees) => {
                 console.table(employees);
                 init();
             });
@@ -40,8 +37,9 @@ const chooseOption = (type) => {
                     name: 'departmentName',
                 })
                     .then((response) => {
-                        db.query('DELETE FROM department WHERE ?', { name: response.departmentName }, (err) => {
+                        db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE department.name = ?',  response.departmentName, (err, employees) => {
                             if (!err) { 
+                                console.table(employees);
                                 init(); 
                             };
                         })
@@ -280,7 +278,7 @@ const init = () => {
         choices: [
             'View All Employees',
             //'View Employees By Manager', BONUS
-            //'View Employees By Department', BONUS
+            'View Employees By Department', 
             'Add Employee',
             'Update Employee Role',
             //'Update Employee Managers', BONUS
