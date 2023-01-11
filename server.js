@@ -8,16 +8,14 @@ const db = mysql.createConnection({
     database: 'employee_db',
 });
 
-
-
 const chooseOption = (type) => {
     switch (type) {
 
         case 'View All Employees': {
             db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, concat(manager.first_name," ", manager.last_name) AS manager
             FROM employee 
-            JOIN role ON employee.role_id = role.id 
-            JOIN department ON role.department_id = department.id 
+            LEFT JOIN role ON employee.role_id = role.id 
+            LEFT JOIN department ON role.department_id = department.id 
             LEFT JOIN employee manager ON employee.manager_id = manager.id`, (err, employees) => {
                 console.table(employees);
                 init();
@@ -27,7 +25,30 @@ const chooseOption = (type) => {
 
         // case 'View Employees By Manager': {} BONUS
 
-        // case 'View Employees By Department': {} BONUS
+        case 'View Employees By Department': {
+            db.query(`SELECT * FROM department`, (err, departments) => {
+                prompt({
+                    type: 'rawlist',
+                    message: 'What is the name of the department?',
+                    choices: function () {
+                        const dept = [];
+                        for (let i = 0; i < departments.length; i++) {
+                            dept.push(departments[i].name);
+                        }
+                        return dept;
+                    },
+                    name: 'departmentName',
+                })
+                    .then((response) => {
+                        db.query('DELETE FROM department WHERE ?', { name: response.departmentName }, (err) => {
+                            if (!err) { 
+                                init(); 
+                            };
+                        })
+                    });
+            });
+            break;
+        } 
 
         case 'Add Employee': {
             const role = [];
@@ -66,63 +87,61 @@ const chooseOption = (type) => {
                 .then((response) => {
                     const managerName = response.manager.split(" ");
 
-                    db.query('SELECT id FROM role WHERE ?', { title: response.role}, (err, roleID) => {
-                        db.query('SELECT id FROM employee WHERE ? AND ?', 
-                        [{ first_name: managerName[0]}, {last_name: managerName[1]}], (err, managerID) => {
-                            db.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [response.first_name, response.last_name, roleID[0].id, managerID[0].id], (err) => {
-                                if (!err) {
-                                    init();
-                                }
+                    db.query('SELECT id FROM role WHERE ?', { title: response.role }, (err, roleID) => {
+                        db.query('SELECT id FROM employee WHERE ? AND ?',
+                            [{ first_name: managerName[0] }, { last_name: managerName[1] }], (err, managerID) => {
+                                db.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [response.first_name, response.last_name, roleID[0].id, managerID[0].id], (err) => {
+                                    if (!err) {
+                                        init();
+                                    }
+                                })
                             })
-                        })
                     })
                 });
             break;
         }
 
-        // TODO: 
         case 'Update Employee Role': {
-            const role = [];
-            const employee = [];
-
             db.query(`SELECT CONCAT(first_name," ", last_name) AS name FROM employee`, (err, employees) => {
-                for (let i = 0; i < employees.length; i++) {
-                    employee.push(employees[i].name);
-                }
-                console.log(employee);
-            });
+                db.query(`SELECT * FROM role`, (err, roles) => {
+                    prompt([{
+                        type: 'rawlist',
+                        message: 'Which employee would you like to update?',
+                        choices: function () {
+                            const employee = [];
+                            for (let i = 0; i < employees.length; i++) {
+                                employee.push(employees[i].name);
+                            }
+                            return employee;
+                        },
+                        name: 'employee',
+                    }, {
+                        type: 'rawlist',
+                        message: 'What is the updated role?',
+                        choices: function () {
+                            const role = [];
+                            for (let i = 0; i < roles.length; i++) {
+                                role.push(roles[i].title);
+                            }
+                            return role;
+                        },
+                        name: 'role',
+                    }])
+                        .then((response) => {
+                            const employeeName = response.employee.split(" ");
 
-            db.query(`SELECT * FROM role`, (err, roles) => {
-                for (let i = 0; i < roles.length; i++) {
-                    role.push(roles[i].title);
-                }
-            });
-
-            prompt([{
-                type: 'rawlist',
-                message: 'Which employee would you like to update?',
-                choices: employee,
-                name: 'employee',
-            }, {
-                type: 'rawlist',
-                message: 'What is the updated role?',
-                choices: role,
-                name: 'role',
-            }])
-                .then((response) => {
-                    console.log('yes');
-                    const employeeName = response.employee.split(" ");
-
-                    db.query(`SELECT id FROM role WHERE title = '${response.role}'`, (err, roleID) => {
-                        db.query(`SELECT id FROM employee WHERE first_name = '${employeeName[0]}' AND last_name = '${employeeName[1]}'`, (err, employeeID) => {
-                            db.query(`UPDATE employee SET title = '${roleID[0].id}' WHERE id = '${employeeID[0].id}'`, (err) => {
-                                if (!err) {
-                                    init();
-                                }
+                            db.query('SELECT id FROM role WHERE ?', { title: response.role }, (err, roleID) => {
+                                db.query('SELECT id FROM employee WHERE ? AND ?', [{ first_name: employeeName[0] }, { last_name: employeeName[1] }], (err, employeeID) => {
+                                    db.query('UPDATE employee SET ? WHERE ?', [{ role_id: roleID[0].id }, { id: employeeID[0].id }], (err) => {
+                                        if (!err) {
+                                            init();
+                                        }
+                                    })
+                                })
                             })
-                        })
-                    })
+                        });
                 });
+            });
             break;
         }
 
@@ -133,7 +152,7 @@ const chooseOption = (type) => {
         case 'View All Roles': {
             db.query(`SELECT role.id, role.title, department.name AS department, role.salary 
             FROM role 
-            JOIN department ON role.department_id = department.id`, (err, roles) => {
+            LEFT JOIN department ON role.department_id = department.id`, (err, roles) => {
                 console.table(roles);
                 init();
             });
@@ -174,7 +193,30 @@ const chooseOption = (type) => {
             break;
         }
 
-        // case 'Delete Role': {} BONUS
+        case 'Delete Role': {
+            db.query(`SELECT * FROM role`, (err, roles) => {
+                prompt({
+                    type: 'rawlist',
+                    message: 'Which role would you like to delete?',
+                    choices: function () {
+                        const role = [];
+                        for (let i = 0; i < roles.length; i++) {
+                            role.push(roles[i].title);
+                        }
+                        return role;
+                    },
+                    name: 'roleTitle',
+                })
+                    .then((response) => {
+                        db.query('DELETE FROM role WHERE ?', { title: response.roleTitle }, (err) => {
+                            if (!err) { 
+                                init(); 
+                            };
+                        })
+                    });
+            });
+            break;
+        }
 
         case 'View All Departments': {
             db.query('SELECT * FROM department', (err, departments) => {
@@ -187,7 +229,7 @@ const chooseOption = (type) => {
         case 'Add Department': {
             prompt({
                 type: 'input',
-                message: 'What is the name of the department?',
+                message: 'Which department would you like to delete?',
                 name: 'departmentName',
             })
                 .then((response) => {
@@ -197,7 +239,30 @@ const chooseOption = (type) => {
             break;
         }
 
-        // case 'Delete Department': {} BONUS
+        case 'Delete Department': {
+            db.query(`SELECT * FROM department`, (err, departments) => {
+                prompt({
+                    type: 'rawlist',
+                    message: 'What is the name of the department?',
+                    choices: function () {
+                        const dept = [];
+                        for (let i = 0; i < departments.length; i++) {
+                            dept.push(departments[i].name);
+                        }
+                        return dept;
+                    },
+                    name: 'departmentName',
+                })
+                    .then((response) => {
+                        db.query('DELETE FROM department WHERE ?', { name: response.departmentName }, (err) => {
+                            if (!err) { 
+                                init(); 
+                            };
+                        })
+                    });
+            });
+            break;
+        }
 
         // case 'View Total Utilized Budget By Department': {} BONUS
 
@@ -222,10 +287,10 @@ const init = () => {
             //'Delete Employee', BONUS
             'View All Roles',
             'Add Role',
-            //'Delete Role', BONUS
+            'Delete Role',
             'View All Departments',
             'Add Department',
-            //'Delete Department', BONUS
+            'Delete Department',
             //'View Total Utilized Budget By Department', BONUS
             'Quit',
         ],
