@@ -1,3 +1,4 @@
+const { response } = require('express');
 const inquirer = require('inquirer');
 const prompt = inquirer.createPromptModule();
 const mysql = require('mysql2');
@@ -276,8 +277,8 @@ const chooseOption = (type) => {
                 name: 'dept',
             }])
                 .then((response) => {
-                    db.query(`SELECT id FROM department WHERE name = '${response.dept}'`, (err, deptID) => {
-                        db.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.title}', '${response.salary}', ${deptID[0].id})`, (err) => {
+                    db.query('SELECT id FROM department WHERE ?', {name: response.dept}, (err, deptID) => {
+                        db.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [response.title, response.salary, deptID[0].id], (err) => {
                             if (!err) {
                                 init();
                             }
@@ -323,12 +324,13 @@ const chooseOption = (type) => {
         case 'Add Department': {
             prompt({
                 type: 'input',
-                message: 'Which department would you like to delete?',
+                message: 'Which department would you like to add?',
                 name: 'departmentName',
             })
                 .then((response) => {
-                    db.query(`INSERT INTO department (name) VALUES ('${response.departmentName}')`);
-                    init();
+                    db.query('INSERT INTO department (name) VALUES (?)', response.departmentName, (err) => {
+                        init();
+                    });
                 });
             break;
         }
@@ -337,7 +339,7 @@ const chooseOption = (type) => {
             db.query(`SELECT * FROM department`, (err, departments) => {
                 prompt({
                     type: 'rawlist',
-                    message: 'What is the name of the department?',
+                    message: 'Which department would you like to delete?',
                     choices: function () {
                         const dept = [];
                         for (let i = 0; i < departments.length; i++) {
